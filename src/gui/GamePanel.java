@@ -5,26 +5,30 @@ import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.io.File;
+import java.io.IOException;
 
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 
+import exceptions.MismatchedSizeException;
 import model.World;
 
 public class GamePanel extends JPanel {
   private static final long serialVersionUID = 1L;
 
-  private final static int CELLSIZE = 15;
+  private final static int CELLSIZE = 7;
 
   private final static Color backgroundColor = Color.BLACK;
-  private final static Color foregroundColor = Color.GREEN;
-  private final static Color gridColor = Color.GRAY;
+  private final static Color foregroundColor = Color.decode("#1fa3f9");
+  private final static Color gridColor = Color.decode("#222222");
 
   private int topBottomMargin;
   private int leftRightMargin;
 
   private World world;
 
-  public GamePanel() {
+  public GamePanel(MainFrame frame) {
     addMouseListener(new MouseAdapter() {
       public void mouseClicked(MouseEvent e) {
         int row = (e.getY() - topBottomMargin) / CELLSIZE;
@@ -58,6 +62,10 @@ public class GamePanel extends JPanel {
 
     if (world == null) {
       world = new World(rows, columns);
+    } else {
+      if (world.getRows() != rows || world.getColumns() != columns) {
+        world = new World(rows, columns);
+      }
     }
 
     g2.setColor(backgroundColor);
@@ -109,6 +117,27 @@ public class GamePanel extends JPanel {
 
   public void next() {
     world.next();
+    repaint();
+  }
+
+  public void save(File selectedFile) {
+
+    try {
+      world.save(selectedFile);
+    } catch (IOException e) {
+      JOptionPane.showMessageDialog(this, "Cannot save selected file", "An error occured", JOptionPane.ERROR_MESSAGE);
+    }
+  }
+
+  public void open(File selectedFile) {
+    try {
+      world.load(selectedFile);
+    } catch (IOException e) {
+      JOptionPane.showMessageDialog(this, "Cannot load selected file", "An error occured", JOptionPane.ERROR_MESSAGE);
+    } catch (MismatchedSizeException e) {
+      JOptionPane.showMessageDialog(this, "Loading grid size from a larger or smaller grid", "Warning",
+          JOptionPane.WARNING_MESSAGE);
+    }
     repaint();
   }
 

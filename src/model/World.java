@@ -1,7 +1,16 @@
 package model;
 
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.Random;
+
+import exceptions.MismatchedSizeException;
 
 public class World {
   private int rows;
@@ -91,13 +100,13 @@ public class World {
         int neighbours = countNeighbours(row, col);
 
         /*
-         * If neighbouring cell count < 2, deactivate cell
+         * If neighbor cell count < 2, deactivate cell
          * 
-         * If neighbouring cell count > 3, deactive cell
+         * If neighbor cell count > 3, deactivate cell
          * 
-         * If neighbouring cell count == 3 activate cell
+         * If neighbor cell count == 3 activate cell
          * 
-         * If neighbouring cell count == 2 don't mess with it
+         * If neighbor cell count == 2 don't mess with it
          */
 
         boolean status = false;
@@ -111,7 +120,6 @@ public class World {
         } else if (neighbours == 2) {
           status = getCell(row, col);
         }
-
         buffer[row][col] = status;
 
       }
@@ -120,6 +128,42 @@ public class World {
       for (int col = 0; col < columns; col++) {
         grid[row][col] = buffer[row][col];
       }
+    }
+
+  }
+
+  public void save(File selectedFile) throws FileNotFoundException, IOException {
+    try (var dos = new DataOutputStream(new FileOutputStream(selectedFile))) {
+      dos.writeInt(rows);
+      dos.writeInt(columns);
+      for (int row = 0; row < rows; row++) {
+        for (int col = 0; col < columns; col++) {
+          dos.writeBoolean(grid[row][col]);
+        }
+      }
+    }
+  }
+
+  public void load(File selectedFile) throws FileNotFoundException, IOException, MismatchedSizeException {
+    try (var dis = new DataInputStream(new FileInputStream(selectedFile))) {
+      int fileRows = dis.readInt();
+      int fileCols = dis.readInt();
+
+      for (int row = 0; row < fileRows; row++) {
+        for (int col = 0; col < fileCols; col++) {
+          boolean status = dis.readBoolean();
+
+          if (row >= rows || col >= columns) {
+            continue;
+          }
+
+          grid[row][col] = status;
+        }
+      }
+      if (fileRows != this.rows || fileCols != this.columns) {
+        throw new MismatchedSizeException();
+      }
+
     }
 
   }
